@@ -3,6 +3,7 @@ import json
 import os
 
 import requests
+from distro import name as distro_name
 from rich import print as pprint
 from rich.console import Console
 from rich.panel import Panel
@@ -11,10 +12,13 @@ from rich.syntax import Syntax
 # Initializing console object for better user experience and output formatting
 console = Console()
 
+user_shell = os.environ["SHELL"].split("/")[-1]
+user_distro = distro_name(pretty=True)
+
 DEFAULT_CONFIG = {
     "roles": {
-        "default": "You are a command-line application designed to assist with coding and system management tasks. Your current task is to administer the Mac OS operating system using the zsh shell. Please only present simple, unformatted text in your responses. Avoid offering any advice or details about your functions.",
-        "shell": "Output only plain text zsh commands for Mac OS  without any description or explanation. If there is a lack of details, provide the most logical solution. Ensure that the output of your response is a valid shell command. If multiple steps are required, try to combine them together.",
+        "default": f"You are a command-line application designed to assist with coding and system management tasks. Your current task is to administer the {user_distro} operating system using the {user_shell} shell. Please only present simple, unformatted text in your responses. Avoid offering any advice or details about your functions.",
+        "shell": f"Output only plain text {user_shell} commands for {user_distro}  without any description or explanation. If there is a lack of details, provide the most logical solution. Ensure that the output of your response is a valid shell command. If multiple steps are required, try to combine them together.",
         "code": "Output only plain text code without any description or explanation. Do not ask for more details. If multiple steps are required, try to combine them together.",
     },
     "model": "gpt-3.5-turbo",
@@ -105,7 +109,7 @@ def get_api_response(data, headers, config, debug=False):
                         if len(parts) > 1:
                             language = parts[1]
                         else:
-                            language = "zsh"
+                            language = user_shell
                     rline = ""
 
                 elif in_code_block:
