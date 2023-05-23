@@ -231,7 +231,11 @@ def main():
     elif args.shell:
         config["role"] = "shell"
 
-    chat(args.prompt, config, args.debug, args.playback)
+    try:                                                                                                                                                                                                                        
+        chat(args.prompt, config, args.debug, args.playback)
+    except KeyboardInterrupt:                                                                                                                                                                                                   
+        pass
+
 
 
 if __name__ == "__main__":
