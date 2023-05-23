@@ -141,6 +141,8 @@ def get_api_response(data, headers, config, debug=False):
 
 def chat(prompt, config, debug=False, playback=False):
     prompt = " ".join(prompt)
+    if prompt == "":
+        prompt = input("How can I help you? ")
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
