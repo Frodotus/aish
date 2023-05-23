@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 
 import requests
 from distro import name as distro_name
@@ -67,7 +68,7 @@ def get_api_response(data, headers, config, debug=False):
 
         in_code_block = False
         language = ""
-
+        lines_printed = 0
         for line in response.iter_lines():
             data = line.lstrip(b"data: ").decode("utf-8")
             if data == "[DONE]":
@@ -78,9 +79,16 @@ def get_api_response(data, headers, config, debug=False):
                     rline = "   "
 
                 if in_code_block:
-                    console.print(Panel(rline), end="\n")
+                    syntax = Syntax(rline, language)
+                    console.print(syntax, end="\n")
                 else:
-                    console.print(rline, end="\n")
+                    if lines_printed == 0 and config["role"] == "shell":
+                        syntax = Syntax(rline, language)
+                        console.print(syntax, end="\n")
+                        if not re.search("this is not a .* command\.", rline):
+                            answer = f"```\n{rline}\n```"
+                    else:
+                        console.print(rline, end="\n")
 
                 rline = ""
                 break
@@ -96,6 +104,7 @@ def get_api_response(data, headers, config, debug=False):
             out = delta["content"]
 
             if "\n" in out:
+                lines_printed += 1
                 out = out.replace("\n", "")
                 rline += out
 
@@ -125,7 +134,6 @@ def get_api_response(data, headers, config, debug=False):
         print()
 
         if config["role"] == "shell":
-            shell = os.environ.get("SHELL", "/bin/sh")
             code_blocks = []
             lines = answer.split("\n")
             in_code_block = False
