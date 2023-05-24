@@ -7,16 +7,51 @@ from flask import Flask, Response, request
 
 app = Flask(__name__)
 
+test_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "../",
+    "tests/test_responses",
+)
+
 
 @app.route("/api/chat", methods=["POST"])
 def proxy():
+    """
+    This function is a Flask route that listens for POST requests at the '/api/chat'
+    endpoint. It acts as a proxy and forwards the incoming request to another server
+    for processing. The response received from the server is then returned back to
+    the client.
+
+    Method: POST
+
+    Parameters:
+    None
+
+    Returns:
+    Response object containing data received from the server
+
+    Usage:
+    Send a POST request to '/api/chat' endpoint with necessary data to be processed.
+
+    Example:
+    import requests
+
+    url = 'http://localhost:5000/api/chat'
+    data = {'query': 'What is the weather today?'}
+    response = requests.post(url, json=data)
+
+    """
     url = "https://api.openai.com/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {os.getenv('OPENAI_API_KEY')}",
     }
-    data = json.dumps(request.json)
-    playback = request.json.get("playback")  # type: ignore
+    json_data = request.json
+    playback = json_data.get("playback")  # type: ignore
+    record = json_data.get("record")  # type: ignore
+    if record:
+        del json_data["record"]  # type: ignore
+    data = json.dumps(json_data)
 
     def generate():
         answer = ""
@@ -54,12 +89,13 @@ def proxy():
 
             # Print the resulting lines
 
-            with open("output.txt", "w") as f:
-                f.write(str(code_blocks))
-            with open("output_raw.txt", "w") as f:
-                f.write(str(raw_lines))
+            # with open("code_blocks.txt", "w") as f:
+            #    f.write(str(code_blocks))
+            if record:
+                with open(os.path.join(test_dir, f"{record}.txt"), "w") as f:
+                    f.write(str(raw_lines))
         else:
-            with open("output_raw.txt", "r") as f:
+            with open(os.path.join(test_dir, f"{playback}.txt"), "r") as f:
                 lines = f.readlines()
                 for line in lines:
                     sleep(0.1)
