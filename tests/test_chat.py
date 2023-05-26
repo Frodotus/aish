@@ -105,7 +105,7 @@ def test_process_delta(capsys):
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result = aish.process_delta(data, result)
+            result = aish.process_delta(data, result, {"role": "shell"})
     captured = capsys.readouterr()
     expected_output = "test1\rtest1\n"
     assert expected_output == captured.out.replace(" ", "")
@@ -115,7 +115,7 @@ def test_process_delta(capsys):
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result = aish.process_delta(data, result)
+            result = aish.process_delta(data, result, {"role": "shell"})
     print("->", captured.out)
     captured = capsys.readouterr()
     expected_output = (
@@ -131,7 +131,7 @@ def test_process_delta(capsys):
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result += aish.process_delta(data, result)
+            result += aish.process_delta(data, result, {"role": "shell"})
     captured = capsys.readouterr()
     expected_output = "\r\npythonsetup.pybdist_wheel\r\n\r\n"
     assert expected_output == captured.out.replace(" ", "")
@@ -141,7 +141,7 @@ def test_process_delta(capsys):
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result = aish.process_delta(data, result)
+            result = aish.process_delta(data, result, {"role": "shell"})
     captured = capsys.readouterr()
     expected_output = "Test1\r\n\r\n\rtest\n\r\nTest2.\r\n"
     assert expected_output == captured.out.replace(" ", "")
@@ -151,7 +151,7 @@ def test_process_delta(capsys):
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result = aish.process_delta(data, result)
+            result = aish.process_delta(data, result, {"role": "shell"})
     captured = capsys.readouterr()
     expected_output = "Test. However, this is not a zsh command for Darwin 22.4.0.\r\n"
     assert expected_output == captured.out

@@ -107,12 +107,12 @@ def process_response(response, config):
         if not data:
             continue
 
-        answer = process_delta(data, answer)
+        answer = process_delta(data, answer, config)
 
     return answer
 
 
-def process_delta(data, answer):
+def process_delta(data, answer, config):
     """
     Extracts and processes response from a remote server.
 
@@ -148,7 +148,10 @@ def process_delta(data, answer):
                 console.print("", end="\r")
                 if finish_reason == "stop" and answer.count("\n") == 0:
                     ll = answer.split("\n")[-1]
-                    if not re.search("this is not a .* command", ll):
+                    if (
+                        not re.search("this is not a .* command", ll)
+                        and config["role"] == "shell"
+                    ):
                         syntax = Syntax(ll, language)
                         console.print(syntax, end="\n")
                     else:
