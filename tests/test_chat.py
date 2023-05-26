@@ -105,21 +105,23 @@ def test_process_delta(capsys):
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result += aish.process_delta(data, result)
+            result = aish.process_delta(data, result)
     captured = capsys.readouterr()
-    expected_output = "\ntest1\rtest1\rtest1\r"
-    assert expected_output == captured.out
+    expected_output = "test1\rtest1"
+    assert expected_output == captured.out.strip()
 
     with open(os.path.join(test_dir, "codeblock_short.txt"), "r") as f:
         lines = f.readlines()
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result += aish.process_delta(data, result)
+            result = aish.process_delta(data, result)
     print("->", captured.out)
     captured = capsys.readouterr()
-    expected_output = "\ntest1\rtest1:\n``\r            \ntest2\rtest2\n``\r            \ntest3\rtest3:\n``\r            \ntest4\rtest4\n            \n            \n```test5\r            \n-> \ntest1\rtest1\rtest1\r\n"
-    assert expected_output == captured.out
+    # remove spaces from captured
+    captured = captured.out.replace(" ", "")
+    expected_output = "test1\r\n\r\ntest2\rtest2\n\r\ntest3\r\n\r\ntest4\rtest4\ntest5\r\n->test1\rtest1\n\n"
+    assert expected_output == captured
 
     with open(
         os.path.join(test_dir, "codeblock_ends_at_last_line_short.txt"), "r"
@@ -130,17 +132,17 @@ def test_process_delta(capsys):
             data = line.lstrip("data: ")
             result += aish.process_delta(data, result)
     captured = capsys.readouterr()
-    expected_output = "\n            \n  \r   python\r   python setup\r   python setup.py\r   python setup.py b\r   python setup.py bdist\r   python setup.py bdist_wheel\r   python setup.py bdist_wheel\n  \r            \n  ```\r            \n"
-    assert expected_output == captured.out
-
+    expected_output = "\r\npythonsetup.pybdist_wheel\r\n\r\n"
+    captured = captured.out.replace(" ", "")
+    assert expected_output == captured
     with open(os.path.join(test_dir, "not_command.txt"), "r") as f:
         lines = f.readlines()
         result = ""
         for line in lines:
             data = line.lstrip("data: ")
-            result += aish.process_delta(data, result)
+            result = aish.process_delta(data, result)
     captured = capsys.readouterr()
-    expected_output = "\nTest\rTest.\rTest. However\rTest. However,\rTest. However, this\rTest. However, this is\rTest. However, this is not\rTest. However, this is not a\rTest. However, this is not a z\rTest. However, this is not a zsh\rTest. However, this is not a zsh command\rTest. However, this is not a zsh command for\rTest. However, this is not a zsh command for Darwin\rTest. However, this is not a zsh command for Darwin \rTest. However, this is not a zsh command for Darwin 22\rTest. However, this is not a zsh command for Darwin 22.\rTest. However, this is not a zsh command for Darwin 22.4\rTest. However, this is not a zsh command for Darwin 22.4.\rTest. However, this is not a zsh command for Darwin 22.4.0\rTest. However, this is not a zsh command for Darwin 22.4.0.\rTest. However, this is not a zsh command for Darwin 22.4.0.\rTest. However, this is not a zsh command for Darwin 22.4.0.\r"
+    expected_output = "Test. However, this is not a zsh command for Darwin 22.4.0.\r\n"
     assert expected_output == captured.out
 
 

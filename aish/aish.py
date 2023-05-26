@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import re
+import sys
 
 import requests
 from distro import name as distro_name
@@ -130,53 +131,41 @@ def process_delta(data, answer):
     try:
         language = ""
         data = json.loads(data)
-        delta = data["choices"][0]["delta"]
-        finish_reason = data["choices"][0]["finish_reason"]
-        chunk = ""
-        if "content" in delta:
-            answer += delta["content"]
-            chunk = delta["content"]
-        elif finish_reason:
-            if answer.count("\n") == 1:
-                ll = answer.split("\n")[-1]
-                if not re.search("this is not a .* command.", ll):
-                    answer = f"```\n{ll}\n```"
-                    chunk = "```"
-                    syntax = Syntax(ll, language)
+        if data["choices"]:
+            delta = data["choices"][0]["delta"]
+            finish_reason = data["choices"][0]["finish_reason"]
+            chunk = ""
+            current_line = ""
+            current_line = answer.split("\n")[-1]
+            if "content" in delta:
+                chunk = delta["content"]
+                current_line += chunk.split("\n")[0]
+
+            next_line = chunk.split("\n")[1:]
+            next_line = "\n".join(next_line)
+            in_code_block = answer.count("```") % 2 == 1
+            if chunk.count("\n") > 0 or finish_reason == "stop":
+                console.print("", end="\r")
+                if finish_reason == "stop" and answer.count("\n") == 0:
+                    ll = answer.split("\n")[-1]
+                    if not re.search("this is not a .* command", ll):
+                        syntax = Syntax(ll, language)
+                        console.print(syntax, end="\n")
+                    else:
+                        console.print("", end="\n")
+                elif in_code_block and "```" not in current_line:
+                    syntax = Syntax(current_line, language)
                     console.print(syntax, end="\n")
                 else:
-                    console.print(ll, end="\n")
+                    console.print("", end="\n")
             else:
-                ll = answer.split("\n")[-1]
-                console.print(ll, end="\r")
-                pass
-        else:
-            answer += "\n"
-            chunk = "\n"
-        count = answer.count("```")
-        last_line = answer.split("\n")[-1]
-        in_code_block = count % 2 == 1
-
-        line_ends = chunk.count("\n")
-        if line_ends > 0 or "```" in last_line:
-            last_line = answer.split("\n")[-1 - line_ends]
-            if "```" in last_line:
-                # TODO: Handle language printout
-                console.print("            ", end="\n")
-                if in_code_block:
-                    parts = last_line.split("```")
-                    if len(parts) > 1:
-                        language = parts[1]
-                    else:
-                        language = user_shell
-
-            elif in_code_block:
-                syntax = Syntax(last_line, language)
-                console.print(syntax, end="\n")
-            else:
-                console.print(last_line, end="\n")
-        else:
-            console.print(last_line, end="\r")
+                if not re.match(r"^[` ]+$", current_line):
+                    console.print(chunk, end="")
+                else:
+                    c = chunk.replace("`", " ")
+                    console.print(c, end="")
+            if "content" in delta:
+                answer += delta["content"]
     except json.decoder.JSONDecodeError:
         pass
 
@@ -200,7 +189,8 @@ def get_code_blocks(answer, config):
         lines = answer.split("\n")
 
         if len(lines) == 1:
-            code_blocks.append(lines[0].strip())
+            if not re.search("this is not a .* command", lines[0]):
+                code_blocks.append(lines[0].strip())
         else:
             in_code_block = False
             is_block_start = False
@@ -248,7 +238,8 @@ def get_api_response(data, headers, config):
 
         answer = process_response(response, config)
         code_blocks = get_code_blocks(answer, config)
-        execute_shell_commands(code_blocks)
+        if config["role"] == "shell":
+            execute_shell_commands(code_blocks)
 
 
 def chat(prompt, config, record=None, playback=None):
