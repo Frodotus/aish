@@ -107,8 +107,8 @@ def test_process_delta(capsys):
             data = line.lstrip("data: ")
             result = aish.process_delta(data, result)
     captured = capsys.readouterr()
-    expected_output = "test1\rtest1"
-    assert expected_output == captured.out.strip()
+    expected_output = "test1\rtest1\n"
+    assert expected_output == captured.out.replace(" ", "")
 
     with open(os.path.join(test_dir, "codeblock_short.txt"), "r") as f:
         lines = f.readlines()
@@ -118,10 +118,11 @@ def test_process_delta(capsys):
             result = aish.process_delta(data, result)
     print("->", captured.out)
     captured = capsys.readouterr()
-    # remove spaces from captured
-    captured = captured.out.replace(" ", "")
-    expected_output = "test1\r\n\r\ntest2\rtest2\n\r\ntest3\r\n\r\ntest4\rtest4\ntest5\r\n->test1\rtest1\n\n"
-    assert expected_output == captured
+    expected_output = (
+        "test1\r\n\r\ntest2\rtest2\n\r\ntest3\r\n\r\n"
+        "test4\rtest4\n\r\ntest5\r\n->test1\rtest1\n\n"
+    )
+    assert expected_output == captured.out.replace(" ", "")
 
     with open(
         os.path.join(test_dir, "codeblock_ends_at_last_line_short.txt"), "r"
@@ -133,8 +134,18 @@ def test_process_delta(capsys):
             result += aish.process_delta(data, result)
     captured = capsys.readouterr()
     expected_output = "\r\npythonsetup.pybdist_wheel\r\n\r\n"
-    captured = captured.out.replace(" ", "")
-    assert expected_output == captured
+    assert expected_output == captured.out.replace(" ", "")
+
+    with open(os.path.join(test_dir, "python_code.txt"), "r") as f:
+        lines = f.readlines()
+        result = ""
+        for line in lines:
+            data = line.lstrip("data: ")
+            result = aish.process_delta(data, result)
+    captured = capsys.readouterr()
+    expected_output = "Test1\r\n\r\n\rtest\n\r\nTest2.\r\n"
+    assert expected_output == captured.out.replace(" ", "")
+
     with open(os.path.join(test_dir, "not_command.txt"), "r") as f:
         lines = f.readlines()
         result = ""

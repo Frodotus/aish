@@ -2,7 +2,6 @@ import argparse
 import json
 import os
 import re
-import sys
 
 import requests
 from distro import name as distro_name
@@ -129,7 +128,7 @@ def process_delta(data, answer):
     global user_shell
 
     try:
-        language = ""
+        language = user_shell
         data = json.loads(data)
         if data["choices"]:
             delta = data["choices"][0]["delta"]
@@ -144,6 +143,7 @@ def process_delta(data, answer):
             next_line = chunk.split("\n")[1:]
             next_line = "\n".join(next_line)
             in_code_block = answer.count("```") % 2 == 1
+            language = answer.split("```")[-1].split("\n")[0]
             if chunk.count("\n") > 0 or finish_reason == "stop":
                 console.print("", end="\r")
                 if finish_reason == "stop" and answer.count("\n") == 0:
@@ -158,6 +158,8 @@ def process_delta(data, answer):
                     console.print(syntax, end="\n")
                 else:
                     console.print("", end="\n")
+            elif "```" in current_line:
+                pass
             else:
                 if not re.match(r"^[` ]+$", current_line):
                     console.print(chunk, end="")
